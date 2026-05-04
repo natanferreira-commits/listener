@@ -1,3 +1,4 @@
+import json
 import logging
 from datetime import datetime
 from urllib.parse import urlparse
@@ -17,8 +18,12 @@ TZ = ZoneInfo("America/Sao_Paulo")
 
 
 class SheetWriter:
-    def __init__(self, creds_path: str, sheet_id: str, tab_links: str, tab_repo: str):
-        creds = Credentials.from_service_account_file(creds_path, scopes=SCOPES)
+    def __init__(self, creds_path: str, sheet_id: str, tab_links: str, tab_repo: str, creds_json: str | None = None):
+        if creds_json:
+            info = json.loads(creds_json)
+            creds = Credentials.from_service_account_info(info, scopes=SCOPES)
+        else:
+            creds = Credentials.from_service_account_file(creds_path, scopes=SCOPES)
         self.gc = gspread.authorize(creds)
         self.sh = self.gc.open_by_key(sheet_id)
         self.tab_links_name = tab_links

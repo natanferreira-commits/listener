@@ -37,11 +37,13 @@ def load_config():
         "api_hash": os.environ["API_HASH"],
         "phone": os.environ.get("TELEGRAM_PHONE", "").strip() or None,
         "target_channel": os.environ.get("TARGET_CHANNEL", "").strip(),
-        "creds_path": os.environ["GOOGLE_CREDS_PATH"],
+        "creds_path": os.environ.get("GOOGLE_CREDS_PATH", "./credentials.json"),
+        "creds_json": os.environ.get("GOOGLE_CREDS_JSON", "").strip() or None,
         "sheet_id": os.environ["SHEET_ID"],
         "tab_links": os.environ.get("SHEET_TAB_LINKS", "Links Nao Trackeados"),
         "tab_repo": os.environ.get("SHEET_TAB_REPO", "Repo de Links"),
         "session_name": os.environ.get("SESSION_NAME", "arena_listener"),
+        "string_session": os.environ.get("STRING_SESSION", "").strip() or None,
     }
     return cfg
 
@@ -71,7 +73,7 @@ async def run():
     cfg = load_config()
     list_only = "--list" in sys.argv
 
-    client = build_client(cfg["api_id"], cfg["api_hash"], cfg["session_name"])
+    client = build_client(cfg["api_id"], cfg["api_hash"], cfg["session_name"], cfg["string_session"])
     if cfg["phone"]:
         await client.start(phone=cfg["phone"])
     else:
@@ -89,7 +91,7 @@ async def run():
         return
 
     logger.info("Carregando planilha e lista de casas...")
-    writer = SheetWriter(cfg["creds_path"], cfg["sheet_id"], cfg["tab_links"], cfg["tab_repo"])
+    writer = SheetWriter(cfg["creds_path"], cfg["sheet_id"], cfg["tab_links"], cfg["tab_repo"], creds_json=cfg["creds_json"])
     houses = writer.load_houses()
     logger.info("Casas carregadas: %s", ", ".join(houses.keys()))
 

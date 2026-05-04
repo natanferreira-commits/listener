@@ -1,8 +1,11 @@
 from telethon import TelegramClient
+from telethon.sessions import StringSession
 from telethon.tl.types import Channel, Chat
 
 
-def build_client(api_id: int, api_hash: str, session_name: str) -> TelegramClient:
+def build_client(api_id: int, api_hash: str, session_name: str, string_session: str | None = None) -> TelegramClient:
+    if string_session:
+        return TelegramClient(StringSession(string_session), api_id, api_hash)
     return TelegramClient(session_name, api_id, api_hash)
 
 
