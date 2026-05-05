@@ -8,7 +8,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from telethon import events
 
-from utils.link_extractor import extract_urls, match_house
+from utils.link_extractor import extract_urls_from_message, match_house
 from utils.sheet_writer import SheetWriter
 from utils.telegram_client import build_client, chat_display_name, message_deeplink
 
@@ -103,7 +103,7 @@ async def run():
     async def handler(event):
         try:
             text = event.message.message or ""
-            urls = extract_urls(text)
+            urls = extract_urls_from_message(event.message)
             if not urls:
                 return
 
@@ -111,10 +111,12 @@ async def run():
             origem = chat_display_name(chat)
             link_msg = message_deeplink(chat, event.message.id)
 
+            logger.info("Mensagem nova com %d URL(s): %s", len(urls), urls)
+
             for url in urls:
                 casa = match_house(url, houses)
                 if not casa:
-                    logger.debug("URL ignorada (casa nao reconhecida): %s", url)
+                    logger.info("URL ignorada (casa nao reconhecida): %s", url)
                     continue
                 writer.append_link(
                     canal_origem=origem,

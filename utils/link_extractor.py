@@ -20,6 +20,45 @@ def extract_urls(text: str) -> list[str]:
     return urls
 
 
+def extract_urls_from_message(message) -> list[str]:
+    """
+    Extrai URLs de uma mensagem Telethon, considerando:
+    1. URLs em texto puro (regex)
+    2. Hyperlinks formatados (MessageEntityTextUrl) - texto clicavel com URL embutida
+    3. URLs marcadas no texto (MessageEntityUrl) - cobertas pelo regex tambem
+    4. Botoes inline (KeyboardButtonUrl) - botao com URL
+    Retorna lista deduplicada preservando ordem.
+    """
+    urls: list[str] = []
+    text = getattr(message, "message", None) or ""
+
+    urls.extend(extract_urls(text))
+
+    entities = getattr(message, "entities", None) or []
+    for entity in entities:
+        url = getattr(entity, "url", None)
+        if url:
+            urls.append(url)
+
+    reply_markup = getattr(message, "reply_markup", None)
+    rows = getattr(reply_markup, "rows", None) or []
+    for row in rows:
+        buttons = getattr(row, "buttons", None) or []
+        for button in buttons:
+            url = getattr(button, "url", None)
+            if url:
+                urls.append(url)
+
+    seen: set[str] = set()
+    out: list[str] = []
+    for u in urls:
+        u = u.strip()
+        if u and u not in seen:
+            seen.add(u)
+            out.append(u)
+    return out
+
+
 def domain_of(url: str) -> str:
     try:
         host = urlparse(url).hostname or ""
