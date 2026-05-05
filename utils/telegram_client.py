@@ -33,3 +33,47 @@ def chat_display_name(chat) -> str:
     if username:
         return f"@{username}"
     return str(getattr(chat, "id", "desconhecido"))
+
+
+def describe_media(message) -> str:
+    """
+    Retorna um marcador tipo [FOTO], [VIDEO] etc se a mensagem tem midia.
+    String vazia se for so texto.
+    """
+    if getattr(message, "photo", None):
+        return "[FOTO]"
+    if getattr(message, "video", None):
+        return "[VIDEO]"
+    if getattr(message, "video_note", None):
+        return "[VIDEO CIRCULAR]"
+    if getattr(message, "voice", None):
+        return "[AUDIO]"
+    if getattr(message, "audio", None):
+        return "[AUDIO]"
+    if getattr(message, "gif", None):
+        return "[GIF]"
+    if getattr(message, "sticker", None):
+        return "[STICKER]"
+    if getattr(message, "document", None):
+        return "[DOCUMENTO]"
+    if getattr(message, "poll", None):
+        return "[ENQUETE]"
+    if getattr(message, "contact", None):
+        return "[CONTATO]"
+    if getattr(message, "geo", None):
+        return "[LOCALIZACAO]"
+    return ""
+
+
+def build_message_content(message) -> str:
+    """
+    Monta o texto que vai pra coluna 'Conteudo da Mensagem' da planilha.
+    Combina tag de midia (se houver) + texto/caption.
+    """
+    text = (getattr(message, "message", None) or "").strip()
+    tag = describe_media(message)
+    if tag and text:
+        return f"{tag} {text}"
+    if tag:
+        return tag
+    return text or "[MENSAGEM SEM CONTEUDO]"

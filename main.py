@@ -10,7 +10,7 @@ from telethon import events
 
 from utils.link_extractor import extract_urls_from_message, match_house
 from utils.sheet_writer import SheetWriter
-from utils.telegram_client import build_client, chat_display_name, message_deeplink
+from utils.telegram_client import build_client, build_message_content, chat_display_name, message_deeplink
 
 ROOT = Path(__file__).parent
 LOGS_DIR = ROOT / "logs"
@@ -102,26 +102,32 @@ async def run():
     @client.on(events.NewMessage(chats=target))
     async def handler(event):
         try:
-            text = event.message.message or ""
-            urls = extract_urls_from_message(event.message)
-            if not urls:
-                return
-
             chat = await event.get_chat()
             origem = chat_display_name(chat)
             link_msg = message_deeplink(chat, event.message.id)
+            conteudo = build_message_content(event.message)
+            urls = extract_urls_from_message(event.message)
 
-            logger.info("Mensagem nova com %d URL(s): %s", len(urls), urls)
-
-            for url in urls:
-                casa = match_house(url, houses)
-                if not casa:
-                    logger.info("URL ignorada (casa nao reconhecida): %s", url)
-                    continue
+            if not urls:
+                logger.info("Mensagem nova SEM URL. Gravando linha em branco. Conteudo: %s", conteudo[:80])
                 writer.append_link(
                     canal_origem=origem,
                     msg_link=link_msg,
-                    conteudo=text,
+                    conteudo=conteudo,
+                    url="",
+                    casa="",
+                )
+                return
+
+            logger.info("Mensagem nova com %d URL(s): %s", len(urls), urls)
+            for url in urls:
+                casa = match_house(url, houses)
+                if not casa:
+                    logger.info("URL sem casa reconhecida (gravando assim mesmo): %s", url)
+                writer.append_link(
+                    canal_origem=origem,
+                    msg_link=link_msg,
+                    conteudo=conteudo,
                     url=url,
                     casa=casa,
                 )
